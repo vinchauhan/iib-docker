@@ -1,3 +1,5 @@
+#!/bin/bash
+
 XVFB=/usr/bin/Xvfb
 XVFBARGS=":99 -screen 0 1920x1280x24 -ac +extension GLX +render -noreset"
 

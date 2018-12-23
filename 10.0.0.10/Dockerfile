@@ -18,9 +18,21 @@ RUN apt-get update && \
     apt-get install -y curl libxtst6 xvfb gtk2-engines-pixbuf && \
     rm -rf /var/lib/apt/lists/*
 
+#Install curl libxtst6
+# RUN apt-get update && \
+#     apt-get install -y curl && \
+#     rm -rf /var/lib/apt/lists/*
+
+# #Install IIB V10 Developer edition
+# RUN mkdir /opt/ibm && \
+#     curl http://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/integration/10.0.0.10-IIB-LINUX64-DEVELOPER.tar.gz \
+#     | tar zx --directory /opt/ibm && \
+#     /opt/ibm/iib-10.0.0.10/iib make registry global accept license silently
+
 # Install IIB V10 Developer edition
 RUN mkdir /opt/ibm && \
-    curl http://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/integration/10.0.0.10-IIB-LINUX64-DEVELOPER.tar.gz \
+    mkdir /build && \
+    curl http://host.docker.internal/10.0.0.10-IIB-LINUX64-DEVELOPER.tar.gz \
     | tar zx --directory /opt/ibm && \
     /opt/ibm/iib-10.0.0.10/iib make registry global accept license silently
 
@@ -31,6 +43,15 @@ RUN echo "IIB_10:" > /etc/debian_chroot  && \
     chown syslog:adm /var/log/syslog && \
     chmod +x /tmp/kernel_settings.sh;sync && \
     /tmp/kernel_settings.sh
+
+#Build tool
+#RUN mkdir /build
+
+#copy our static linked executable
+COPY goiib /build
+
+#Add the build tool to the path
+ENV PATH="/build/:${PATH}"
 
 # Create user to run as
 RUN useradd --create-home --home-dir /home/iibuser -G mqbrkrs,sudo iibuser && \
@@ -45,14 +66,14 @@ RUN sed -i 's/sha512/sha512 minlen=8/'  /etc/pam.d/common-password && \
 COPY iib_manage.sh /usr/local/bin/
 COPY iib-license-check.sh /usr/local/bin/
 COPY iib_env.sh /usr/local/bin/
-COPY xvfd /etc/init.d/
+COPY xvfb.sh /etc/init.d/xvfb
 RUN chmod +rx /usr/local/bin/*.sh && \
-    chmod +x /etc/init.d/xvfb && \
-    ./etc/init.d/xvfb start    
+    chmod +x /etc/init.d/xvfb    
 
 # Set BASH_ENV to source mqsiprofile when using docker exec bash -c
 ENV BASH_ENV=/usr/local/bin/iib_env.sh
 ENV MQSI_MQTT_LOCAL_HOSTNAME=127.0.0.1
+ENV DISPLAY :99
 
 # Expose default admin port and http port
 EXPOSE 4414 7800

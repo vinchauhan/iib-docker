@@ -8,6 +8,10 @@
 
 set -e
 
+#Starting Xvfb in the background
+#/etc/init.d/xvfb start
+Xvfb :99 -screen 0 1920x1280x24 -ac +extension GLX +render -noreset
+
 NODE_NAME=${NODENAME-IIBV10NODE}
 SERVER_NAME=${SERVERNAME-default}
 
@@ -66,6 +70,8 @@ monitor()
 {
 	echo "----------------------------------------"
 	echo "Running - stop container to exit"
+        # Stop/Kill any running instance of Xvfb when container stops
+        kill $(ps aux | grep '[X]vfb' | awk '{print $2}')
 	# Loop forever by default - container must be stopped manually.
 	# Here is where you can add in conditions controlling when your container will exit - e.g. check for existence of specific processes stopping or errors beiing reported
 	while true; do
